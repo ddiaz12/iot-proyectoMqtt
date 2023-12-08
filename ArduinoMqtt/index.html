@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CarnitasElPrimi SmartHouse</title>
+    <style>
+        body {
+            color: #fff;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-around;
+            align-items: center;
+            height: 100vh;
+            background-image: url("https://gifdb.com/images/high/scared-anime-girl-4tueaajp4p3d0lva.webp");
+            background-size: 100%;
+        }
+
+        .sectionContainer {
+            background-color: #9c2baf;
+            border-radius: 15px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            margin: 20px;
+            padding: 20px;
+            width: 300px;
+            text-align: center;
+        }
+
+        h2,
+        h3 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .buttonContainer {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        button {
+            background-color: #3498db;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 0 5px;
+            padding: 5px 10px;
+            text-decoration: none;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        #smokeStatus,
+        #motionStatus,
+        #temperatureStatus,
+        #humidityStatus {
+            font-size: 20px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="sectionContainer">
+        <h3>Estado del Sensor de Humo:</h3>
+        <p id="smokeStatus">Desconocido</p>
+    </div>
+
+    <div class="sectionContainer">
+        <h3>Estado del Sensor de Movimiento:</h3>
+        <p id="motionStatus">Desconocido</p>
+    </div>
+
+    <div class="sectionContainer">
+        <h3>Estado del Sensor DHT11:</h3>
+        <p id="temperatureStatus">Temperatura: Desconocido</p>
+        <p id="humidityStatus">Humedad: Desconocido</p>
+    </div>
+
+    <div class="sectionContainer">
+        <h2>Control del Buzzer</h2>
+        <button id="buzzerOnButton">Encender</button>
+        <button id="buzzerOffButton">Apagar</button>
+    </div>
+    <script src="mqtt.js"></script>
+    <script>
+        const smokeStatus = document.getElementById("smokeStatus");
+        const motionStatus = document.getElementById("motionStatus");
+        const temperatureStatus = document.getElementById("temperatureStatus");
+        const humidityStatus = document.getElementById("humidityStatus");
+        const buzzerOnButton = document.getElementById("buzzerOnButton");
+        const buzzerOffButton = document.getElementById("buzzerOffButton");
+
+        const mqttServer = "wss://k8da39e9.ala.us-east-1.emqxsl.com:8084/mqtt";
+        const options = {
+            clean: true,
+            connectTimeout: 4000,
+            clientId: "emqxjs_" + Math.random().toString(16).substr(2, 8),
+            username: "mqtt",
+            password: "password",
+        };
+        const client = mqtt.connect(mqttServer, options);
+
+        client.on("connect", function () {
+            console.log("Connected to MQTT server");
+            client.subscribe("monitores/esp32", function (err) {
+                if (!err) {
+                    console.log("Subscribed to monitores/esp32");
+                } else {
+                    console.log("Subscription error:", err);
+                }
+            });
+        });
+
+        client.on("message", function (topic, message) {
+            console.log("Received message:", message.toString());
+            try {
+                if (message.length > 0) {
+                    let data = JSON.parse(message.toString());
+                    if (data && Object.keys(data).length > 0) {
+                        updateStatus(data);
+                    } else {
+                        console.log("Received JSON with no data or empty object.");
+                    }
+                } else {
+                    console.log("Received an empty message.");
+                }
+            } catch (e) {
+                console.log("Error parsing JSON:", e);
+            }
+        });
+
+        const updateStatus = (data) => {
+            // Actualiza los estados de los sensores según los datos recibidos
+            smokeStatus.textContent = data.smokeDetected ? "Detectado" : "No Detectado";
+            motionStatus.textContent = data.motionDetected ? "Detectado" : "No Detectado";
+            temperatureStatus.textContent = `Temperatura: ${data.temperature} °C`;
+            humidityStatus.textContent = `Humedad: ${data.humidity} %`;
+        };
+
+        buzzerOnButton.addEventListener("click", () => {
+            sendCommand("buzzer/on");
+        });
+
+        buzzerOffButton.addEventListener("click", () => {
+            sendCommand("buzzer/off");
+        });
+
+        const sendCommand = (command) => {
+            const topic = "monitores/esp32";
+            const message = JSON.stringify({ action: command });
+            client.publish(topic, message);
+        };
+
+        // Manejo de errores en la conexión MQTT
+        client.on("error", function (error) {
+            console.log("MQTT Error:", error);
+        });
+    </script>
+</body>
+
+</html>
