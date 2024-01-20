@@ -17,7 +17,7 @@
             justify-content: space-around;
             align-items: center;
             height: 100vh;
-            background-image: url("https://gifdb.com/images/high/scared-anime-girl-4tueaajp4p3d0lva.webp");
+            background-image: url("https://c4.wallpaperflare.com/wallpaper/410/867/750/vector-forest-sunset-forest-sunset-forest-wallpaper-preview.jpg");
             background-size: 100%;
         }
 
@@ -63,9 +63,7 @@
         }
 
         #smokeStatus,
-        #motionStatus,
-        #temperatureStatus,
-        #humidityStatus {
+        #irStatus {
             font-size: 20px;
             margin: 10px 0;
         }
@@ -79,14 +77,8 @@
     </div>
 
     <div class="sectionContainer">
-        <h3>Estado del Sensor de Movimiento:</h3>
-        <p id="motionStatus">Desconocido</p>
-    </div>
-
-    <div class="sectionContainer">
-        <h3>Estado del Sensor DHT11:</h3>
-        <p id="temperatureStatus">Temperatura: Desconocido</p>
-        <p id="humidityStatus">Humedad: Desconocido</p>
+        <h3>Estado del Sensor Infrarrojo:</h3>
+        <p id="irStatus">Desconocido</p>
     </div>
 
     <div class="sectionContainer">
@@ -97,9 +89,7 @@
     <script src="mqtt.js"></script>
     <script>
         const smokeStatus = document.getElementById("smokeStatus");
-        const motionStatus = document.getElementById("motionStatus");
-        const temperatureStatus = document.getElementById("temperatureStatus");
-        const humidityStatus = document.getElementById("humidityStatus");
+        const irStatus = document.getElementById("irStatus");
         const buzzerOnButton = document.getElementById("buzzerOnButton");
         const buzzerOffButton = document.getElementById("buzzerOffButton");
 
@@ -145,9 +135,7 @@
         const updateStatus = (data) => {
             // Actualiza los estados de los sensores según los datos recibidos
             smokeStatus.textContent = data.smokeDetected ? "Detectado" : "No Detectado";
-            motionStatus.textContent = data.motionDetected ? "Detectado" : "No Detectado";
-            temperatureStatus.textContent = `Temperatura: ${data.temperature} °C`;
-            humidityStatus.textContent = `Humedad: ${data.humidity} %`;
+            irStatus.textContent = data.irDetected ? "Detectado" : "No Detectado";
         };
 
         buzzerOnButton.addEventListener("click", () => {
